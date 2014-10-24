@@ -8,11 +8,21 @@ import gmpy
 import struct
 from rsa import PublicKey, PrivateKey
 
+class Output:
+    @staticmethod
+    def equation(left, right):
+        print('%s = %s' % (left, right))
+
+    @staticmethod
+    def format(val, f):
+        return f(val)
+
 class RSATool:
     def __init__(self):
         parser = argparse.ArgumentParser()
         sub_parsers = parser.add_subparsers(help='sub commands')
         info_parser = sub_parsers.add_parser('info', help='show RSA public/private key information')
+        info_parser.add_argument('--hex', help='print values in hexadecimal form', action='store_true')
         info_parser.add_argument('infile', nargs='?', type=argparse.FileType('rb'), default=sys.stdin)
         info_parser.set_defaults(func=self.info)
         args = parser.parse_args()
@@ -33,14 +43,14 @@ class RSATool:
             is_priv_key = True
 
         print('N is %d bits' % (len(bin(key.n))-2))
-        print('N = %d' % key.n)
-        print('e = %d' % key.e)
+
+        Output.equation('N', Output.format(key.n, hex if args.hex else str))
+        Output.equation('e', Output.format(key.e, hex if args.hex else str))
         
         if is_priv_key:
-            print('d = %d' % key.d)
-            print('p = %d' % key.p)
-            print('q = %d' % key.q)
-
+            Output.equation('d', Output.format(key.d, hex if args.hex else str))
+            Output.equation('p', Output.format(key.p, hex if args.hex else str))
+            Output.equation('q', Output.format(key.q, hex if args.hex else str))
 
     def parse_ssh_key(self, data):
         offset = 11
