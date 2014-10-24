@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+import os
+import os.path
+import sys
+import argparse
+import gmpy
+import struct
+from rsa import PublicKey, PrivateKey
+
+class RSATool:
+    def __init__(self):
+        parser = argparse.ArgumentParser()
+        sub_parsers = parser.add_subparsers(help='sub commands')
+        info_parser = sub_parsers.add_parser('info', help='show RSA public/private key information')
+        info_parser.add_argument('infile', nargs='?', type=argparse.FileType('rb'), default=sys.stdin)
+        info_parser.set_defaults(func=self.info)
+        args = parser.parse_args()
+        args.func(args)
+
+    def info(self, args):
+        keydata = args.infile.read()
+        is_priv_key = False
+
+        # detect keyfile type
+        if 'PUBLIC' in keydata:
+            key = PublicKey.load_pkcs1(keydata)
+        elif 'ssh-rsa' in keydata:
+            ssh_key = keydata.split(' ')[1].decode('base64')
+            key = self.parse_ssh_key(ssh_key)
+        else:
+            key = PrivateKey.load_pkcs1(keydata)
+            is_priv_key = True
+
+        print('N is %d bits' % (len(bin(key.n))-2))
+        print('N = %d' % key.n)
+        print('e = %d' % key.e)
+        
+        if is_priv_key:
+            print('d = %d' % key.d)
+            print('p = %d' % key.p)
+            print('q = %d' % key.q)
+
+
+    def parse_ssh_key(self, data):
+        offset = 11
+        len_e = struct.unpack('>I', data[offset:offset+4])[0]
+        offset += 4
+        e = int(data[offset:(offset+len_e)].encode('hex'), 16)
+        offset += len_e
+        len_N = struct.unpack('>I', data[offset:(offset+4)])[0]
+        offset += 4
+        N = int(data[offset:(offset+len_N)].encode('hex'), 16)
+        return PublicKey(N, e)
+
+
+if __name__ == '__main__':
+    RSATool()
