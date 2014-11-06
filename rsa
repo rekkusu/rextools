@@ -7,15 +7,6 @@ import argparse
 import struct
 from Crypto.PublicKey import RSA
 
-class Output:
-    @staticmethod
-    def equation(left, right):
-        print('%s = %s' % (left, right))
-
-    @staticmethod
-    def format(val, f):
-        return f(val)
-
 class RSATool:
     def __init__(self):
         parser = argparse.ArgumentParser()
