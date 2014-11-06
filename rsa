@@ -4,9 +4,8 @@ import os
 import os.path
 import sys
 import argparse
-import gmpy
 import struct
-from rsa import PublicKey, PrivateKey
+from Crypto.PublicKey import RSA
 
 class Output:
     @staticmethod
@@ -30,27 +29,14 @@ class RSATool:
 
     def info(self, args):
         keydata = args.infile.read()
-        is_priv_key = False
+        key = RSA.importKey(keydata)
 
-        # detect keyfile type
-        if 'PUBLIC' in keydata:
-            key = PublicKey.load_pkcs1(keydata)
-        elif 'ssh-rsa' in keydata:
-            ssh_key = keydata.split(' ')[1].decode('base64')
-            key = self.parse_ssh_key(ssh_key)
-        else:
-            key = PrivateKey.load_pkcs1(keydata)
-            is_priv_key = True
-
-        print('N is %d bits' % (len(bin(key.n))-2))
-
-        Output.equation('N', Output.format(key.n, hex if args.hex else str))
-        Output.equation('e', Output.format(key.e, hex if args.hex else str))
-        
-        if is_priv_key:
-            Output.equation('d', Output.format(key.d, hex if args.hex else str))
-            Output.equation('p', Output.format(key.p, hex if args.hex else str))
-            Output.equation('q', Output.format(key.q, hex if args.hex else str))
+        print("N = %s" % (hex(key.n)[:-1] if args.hex else str(key.n)))
+        print("e = %s" % (hex(key.e)[:-1] if args.hex else str(key.e)))
+        if key.has_private():
+            print("p = %s" % (hex(key.p)[:-1] if args.hex else str(key.p)))
+            print("q = %s" % (hex(key.q)[:-1] if args.hex else str(key.q)))
+            print("d = %s" % (hex(key.d)[:-1] if args.hex else str(key.d)))
 
     def parse_ssh_key(self, data):
         offset = 11
@@ -62,6 +48,9 @@ class RSATool:
         offset += 4
         N = int(data[offset:(offset+len_N)].encode('hex'), 16)
         return PublicKey(N, e)
+
+    def eq(self, left, right):
+        print('%s = %s' % (left, right))
 
 
 if __name__ == '__main__':
