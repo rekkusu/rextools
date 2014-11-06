@@ -29,20 +29,6 @@ class RSATool:
             print("q = %s" % (hex(key.q)[:-1] if args.hex else str(key.q)))
             print("d = %s" % (hex(key.d)[:-1] if args.hex else str(key.d)))
 
-    def parse_ssh_key(self, data):
-        offset = 11
-        len_e = struct.unpack('>I', data[offset:offset+4])[0]
-        offset += 4
-        e = int(data[offset:(offset+len_e)].encode('hex'), 16)
-        offset += len_e
-        len_N = struct.unpack('>I', data[offset:(offset+4)])[0]
-        offset += 4
-        N = int(data[offset:(offset+len_N)].encode('hex'), 16)
-        return PublicKey(N, e)
-
-    def eq(self, left, right):
-        print('%s = %s' % (left, right))
-
 
 if __name__ == '__main__':
     RSATool()
